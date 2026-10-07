@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StudyForge – AI Study Notes & Flashcards</title>
+<meta name="description" content="Turn any lecture text or topic into study notes, flashcards and a quiz with AI.">
+<script>
+// apply saved theme before paint (no flash)
+(function(){try{var t=localStorage.getItem("sf_theme")||"auto";document.documentElement.dataset.theme=t;}catch(e){}})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f2f5fa;--panel:#fff;--ink:#0d1b2e;--muted:#5b6b82;--line:#d5dded;--accent:#1f5eff;--accent-ink:#fff;--soft:#e4ecff;--ok:#12805c;--bad:#c62f3d;--grid:rgba(31,94,255,.06)}
+:root[data-theme="dark"]{--bg:#0a1220;--panel:#111c30;--ink:#e8eefb;--muted:#93a4c0;--line:#22324f;--accent:#5fd0ff;--accent-ink:#06121f;--soft:#16294a;--ok:#4cd9a3;--bad:#ff7a86;--grid:rgba(95,208,255,.06)}
+@media (prefers-color-scheme:dark){:root[data-theme="auto"]{--bg:#0a1220;--panel:#111c30;--ink:#e8eefb;--muted:#93a4c0;--line:#22324f;--accent:#5fd0ff;--accent-ink:#06121f;--soft:#16294a;--ok:#4cd9a3;--bad:#ff7a86;--grid:rgba(95,208,255,.06)}}
+*{box-sizing:border-box}
+body{margin:0;color:var(--ink);font:16px/1.55 "IBM Plex Sans",system-ui,sans-serif;background:var(--bg);
+background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:28px 28px;transition:background-color .25s,color .25s}
+h1,h2,h3{font-family:"Space Grotesk",system-ui,sans-serif;margin:0}
+.wrap{max-width:900px;margin:0 auto;padding:18px 16px 60px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:22px}
+.brand{font:700 1.4rem "Space Grotesk",sans-serif;letter-spacing:-.02em}
+.brand span{color:var(--accent)}
+.hero h1{font-size:clamp(1.8rem,5vw,2.8rem);line-height:1.1;letter-spacing:-.03em;max-width:15em}
+.hero p{color:var(--muted);max-width:36em;margin:10px 0 22px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}
+label{font-weight:600;font-size:.9rem}
+textarea,select{width:100%;margin-top:6px;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+textarea{min-height:150px;resize:vertical}
+.row{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;align-items:flex-end}
+.row>div{flex:1;min-width:130px}
+button,.btn{font:600 .95rem "IBM Plex Sans",sans-serif;cursor:pointer;border:1px solid var(--accent);border-radius:8px;padding:9px 14px;background:var(--accent);color:var(--accent-ink)}
+button.ghost,.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+button:hover:not(:disabled){filter:brightness(1.08)}
+button:disabled{opacity:.5;cursor:wait}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.tabs button{background:transparent;color:var(--ink);border-color:var(--line)}
+.tabs button.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.notes h2{font-size:1.5rem}
+.notes h3{margin:18px 0 4px;font-size:1.05rem;color:var(--accent)}
+.notes ul{margin:4px 0;padding-left:20px}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.fc{perspective:1000px;height:230px;cursor:pointer;margin:10px 0 14px}
+.fc-in{position:relative;height:100%;transition:transform .45s;transform-style:preserve-3d}
+.fc.flip .fc-in{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;border:1px solid var(--line);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center;overflow:auto;background:var(--panel);font-size:1.1rem}
+.face small{color:var(--muted);margin-bottom:8px}
+.face.back{transform:rotateY(180deg);background:var(--soft)}
+.ctrl{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.stat{text-align:center;color:var(--muted);margin:8px 0}
+.q{margin-bottom:18px}
+.q p{font-weight:600;margin:0 0 8px}
+.opt{display:block;width:100%;text-align:left;margin-bottom:6px;background:var(--bg);color:var(--ink);border-color:var(--line);font-weight:500}
+.opt.right{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 18%,var(--panel))}
+.opt.wrong{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 18%,var(--panel))}
+.exp{color:var(--muted);font-size:.9rem;margin-top:4px}
+.err{color:var(--bad);margin-top:10px}
+.hist{display:flex;gap:8px;flex-wrap:wrap}
+.hist button{background:var(--soft);color:var(--ink);border-color:var(--line);font-weight:500}
+.hide{display:none}
+footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:30px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="brand">Study<span>Forge</span></div>
+    <button class="ghost" id="theme" aria-label="Change colour theme">Theme: Auto</button>
+  </div>
+
+  <div class="hero">
+    <h1>Turn lecture material into notes, flashcards and a quiz.</h1>
+    <p>Paste text, upload a .txt or .md file, or just type a topic. The AI does the rest.</p>
+  </div>
+
+  <div class="panel">
+    <label for="src">Material or topic</label>
+    <textarea id="src" placeholder="e.g. How does a BJT work as an amplifier?"></textarea>
+    <div class="row">
+      <div><label for="lvl">Level</label><select id="lvl"><option>Beginner</option><option selected>Undergraduate</option><option>Advanced</option></select></div>
+      <div><label for="cnt">Flashcards</label><select id="cnt"><option>5</option><option selected>8</option><option>12</option><option>15</option></select></div>
+      <div><label for="file" class="btn ghost" style="display:block;text-align:center">Upload file</label><input id="file" type="file" accept=".txt,.md" class="hide"></div>
+    </div>
+    <div class="row"><button id="go">Generate study set</button><button class="ghost" id="clr">Clear</button></div>
+    <div id="err" class="err" role="alert"></div>
+  </div>
+
+  <div id="histBox" class="panel hide"><strong>Recent sets</strong><div class="hist" id="hist" style="margin-top:8px"></div></div>
+
+  <div id="out" class="hide">
+    <div class="tabs" role="tablist">
+      <button id="tN" class="on">Notes</button><button id="tF">Flashcards</button><button id="tQ">Quiz</button>
+    </div>
+
+    <div id="pN" class="panel notes">
+      <div id="notes"></div>
+      <div class="tools"><button class="ghost" id="cpy">Copy notes</button><button class="ghost" id="dlN">Download .md</button></div>
+    </div>
+
+    <div id="pF" class="panel hide">
+      <div class="stat" id="pos"></div>
+      <div class="fc" id="fc" tabindex="0" role="button" aria-label="Flip card"><div class="fc-in">
+        <div class="face"><small>Question</small><div id="q"></div></div>
+        <div class="face back"><small>Answer</small><div id="a"></div></div>
+      </div></div>
+      <div class="ctrl"><button class="ghost" id="prev">Previous</button><button class="ghost" id="flip">Flip</button><button class="ghost" id="next">Next</button></div>
+      <div class="ctrl" style="margin-top:10px"><button id="know">I knew it</button><button class="ghost" id="again">Review again</button></div>
+      <div class="stat" id="score"></div>
+      <div class="tools" style="justify-content:center"><button class="ghost" id="shuf">Shuffle</button><button class="ghost" id="rev">Review missed only</button><button class="ghost" id="dlC">Export CSV (Anki)</button></div>
+    </div>
+
+    <div id="pQ" class="panel hide"><div id="quiz"></div><div class="stat" id="qs"></div><div class="tools"><button class="ghost" id="rq">Retake quiz</button></div></div>
+  </div>
+  <footer>StudyForge – AI Assisted Study Notes &amp; Flash Card Generator • No Claude login required</footer>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let data=null,cards=[],i=0,known=new Set(),score=0,answered=0;
+
+// ---------- theme: auto -> light -> dark ----------
+const themes=["auto","light","dark"];
+function setTheme(t){document.documentElement.dataset.theme=t;try{localStorage.setItem("sf_theme",t)}catch(e){}$("theme").textContent="Theme: "+t[0].toUpperCase()+t.slice(1);}
+setTheme(document.documentElement.dataset.theme||"auto");
+$("theme").onclick=()=>setTheme(themes[(themes.indexOf(document.documentElement.dataset.theme)+1)%3]);
+
+// ---------- tabs ----------
+function tab(n){["N","F","Q"].forEach(k=>{$("t"+k).classList.toggle("on",k===n);$("p"+k).classList.toggle("hide",k!==n)});}
+["N","F","Q"].forEach(k=>$("t"+k).onclick=()=>tab(k));
+
+// ---------- history (localStorage) ----------
+const getH=()=>{try{return JSON.parse(localStorage.getItem("sf_hist")||"[]")}catch(e){return[]}};
+function saveH(d){try{const h=getH().filter(x=>x.title!==d.title);h.unshift(d);localStorage.setItem("sf_hist",JSON.stringify(h.slice(0,8)));}catch(e){}renderH();}
+function renderH(){const h=getH();$("histBox").classList.toggle("hide",!h.length);$("hist").innerHTML="";h.forEach((d,k)=>{const b=document.createElement("button");b.textContent=d.title||"Untitled";b.onclick=()=>load(d);$("hist").appendChild(b);});}
+
+// ---------- render ----------
+function load(d){data=d;cards=(d.flashcards||[]).filter(c=>c.question&&c.answer);i=0;known=new Set();
+  let h=`<h2>${esc(d.title)}</h2><p>${esc(d.summary)}</p>`;
+  (d.sections||[]).forEach(s=>h+=`<h3>${esc(s.heading)}</h3><ul>${(s.points||[]).map(p=>`<li>${esc(p)}</li>`).join("")}</ul>`);
+  if((d.key_terms||[]).length)h+=`<h3>Key terms</h3><ul>${d.key_terms.map(k=>`<li><b>${esc(k.term)}</b>: ${esc(k.definition)}</li>`).join("")}</ul>`;
+  $("notes").innerHTML=h;show();renderQuiz();$("out").classList.remove("hide");tab("N");}
+function show(){if(!cards.length){$("q").textContent="No cards";$("a").textContent="";return}
+  $("fc").classList.remove("flip");$("q").textContent=cards[i].question;$("a").textContent=cards[i].answer;
+  $("pos").textContent=`Card ${i+1} of ${cards.length}`;$("score").textContent=`Known: ${known.size} / ${cards.length}`;}
+const go=d=>{if(!cards.length)return;i=(i+d+cards.length)%cards.length;show()};
+$("prev").onclick=()=>go(-1);$("next").onclick=()=>go(1);
+$("flip").onclick=$("fc").onclick=()=>$("fc").classList.toggle("flip");
+$("know").onclick=()=>{known.add(cards[i]);go(1)};$("again").onclick=()=>{known.delete(cards[i]);go(1)};
+$("shuf").onclick=()=>{cards.sort(()=>Math.random()-.5);i=0;show()};
+$("rev").onclick=()=>{const m=cards.filter(c=>!known.has(c));if(!m.length){alert("You know every card!");return}cards=m;i=0;show()};
+document.addEventListener("keydown",e=>{if($("pF").classList.contains("hide")||/TEXTAREA|SELECT/.test(e.target.tagName))return;
+  if(e.key==="ArrowRight")go(1);else if(e.key==="ArrowLeft")go(-1);else if(e.key===" "){e.preventDefault();$("fc").classList.toggle("flip")}});
+
+// ---------- quiz ----------
+function renderQuiz(){score=0;answered=0;const qs=data.quiz||[];
+  $("quiz").innerHTML=qs.map((q,k)=>`<div class="q"><p>${k+1}. ${esc(q.question)}</p>${(q.options||[]).map((o,j)=>`<button class="opt" data-q="${k}" data-o="${j}">${esc(o)}</button>`).join("")}<div class="exp hide" id="e${k}">${esc(q.explanation)}</div></div>`).join("")||"No quiz generated.";
+  $("qs").textContent="";
+  document.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{const k=+b.dataset.q,j=+b.dataset.o,ans=qs[k].answer_index;
+    const sib=[...document.querySelectorAll(`.opt[data-q="${k}"]`)];if(sib[0].disabled)return;
+    sib.forEach(s=>s.disabled=true);sib[ans].classList.add("right");if(j!==ans)b.classList.add("wrong");else score++;
+    answered++;$("e"+k).classList.remove("hide");$("qs").textContent=`Score: ${score} / ${answered} answered (${qs.length} total)`;});}
+$("rq").onclick=renderQuiz;
+
+// ---------- export ----------
+function dl(name,text,type){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();URL.revokeObjectURL(a.href);}
+function md(){let t=`# ${data.title}\n\n${data.summary}\n\n`;(data.sections||[]).forEach(s=>t+=`## ${s.heading}\n${(s.points||[]).map(p=>"- "+p).join("\n")}\n\n`);
+  if(data.key_terms?.length)t+=`## Key terms\n${data.key_terms.map(k=>`- **${k.term}**: ${k.definition}`).join("\n")}\n`;return t;}
+$("dlN").onclick=()=>dl("study-notes.md",md(),"text/markdown");
+$("cpy").onclick=async()=>{try{await navigator.clipboard.writeText(md());$("cpy").textContent="Copied";setTimeout(()=>$("cpy").textContent="Copy notes",1500)}catch(e){alert("Copy failed")}};
+$("dlC").onclick=()=>{const q=s=>`"${String(s).replace(/"/g,'""')}"`;dl("flashcards.csv",(data.flashcards||[]).map(c=>q(c.question)+","+q(c.answer)).join("\n"),"text/csv")};
+
+// ---------- input ----------
+$("file").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{$("src").value=String(r.result).slice(0,12000)};r.readAsText(f);};
+$("clr").onclick=()=>{$("src").value="";$("err").textContent="";$("out").classList.add("hide")};
+$("go").onclick=async()=>{
+  const text=$("src").value.trim();
+  if(!text){$("err").textContent="Enter some material or a topic first.";return}
+  $("err").textContent="";$("go").disabled=true;$("go").textContent="Generating…";
+  try{
+    const r=await fetch("/api/generate",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({text,level:$("lvl").value,count:$("cnt").value})
+    });
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.error||"AI request failed");
+    saveH(d);load(d);$("out").scrollIntoView({behavior:"smooth"});
+  }catch(e){$("err").textContent=e.message||"Something went wrong. Try again."}
+  $("go").disabled=false;$("go").textContent="Generate study set";
+};
+renderH();
+</script>
+</body>
+</html>
